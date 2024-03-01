@@ -24,7 +24,7 @@ clc; clear all;
 
 %------ SPECIFY DATA ------------------------------------------------------
 %------ 指定数据文件 -------------------------------------------------------
-PATH= 'E:\study\study\ECGRecognition\data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.0.0'; % 指定数据的储存路径
+PATH= 'data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.0.0'; % 指定数据的储存路径
 HEADERFILE= '100.hea';      % .hea 格式，头文件，可用记事本打开
 ATRFILE= '100.atr';         % .atr 格式，属性文件，数据格式为二进制数
 DATAFILE='100.dat';         % .dat 格式，ECG 数据
