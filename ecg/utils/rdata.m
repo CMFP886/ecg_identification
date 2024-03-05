@@ -28,7 +28,7 @@ PATH= 'data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.
 HEADERFILE= '100.hea';      % .hea 格式，头文件，可用记事本打开
 ATRFILE= '100.atr';         % .atr 格式，属性文件，数据格式为二进制数
 DATAFILE='100.dat';         % .dat 格式，ECG 数据
-SAMPLES2READ=1800;          % 指定需要读入的样本数
+SAMPLES2READ=1805*360;          % 指定需要读入的样本数
                             % 若.dat文件中存储有两个通道的信号:
                             % 则读入 2*SAMPLES2READ 个数据 
 
@@ -110,6 +110,15 @@ clear A M1H M2H PRR PRL;
 fprintf(1,'\\n$> LOADING DATA FINISHED \n');
 
 %------ LOAD ATTRIBUTES DATA ----------------------------------------------
+PATH= 'data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.0.0'; % 指定数据的储存路径
+HEADERFILE= '100.hea';      % .hea 格式，头文件，可用记事本打开
+signalh= fullfile(PATH, HEADERFILE);    % 通过函数 fullfile 获得头文件的完整路径
+ATRFILE= '100.atr';         % .atr 格式，属性文件，数据格式为二进制数
+fid1=fopen(signalh,'r');    % 打开头文件，其标识符为 fid1 ，属性为'r'--“只读”
+z= fgetl(fid1);             % 读取头文件的第一行数据，字符串格式
+A= sscanf(z, '%*s %d %d %d',[1,3]); % 按照格式 '%*s %d %d %d' 转换数据并存入矩阵 A 中
+sfreq=A(2);     % 数据采样频率
+
 atrd= fullfile(PATH, ATRFILE);      % attribute file with annotation data
 fid3=fopen(atrd,'r');
 A= fread(fid3, [2, inf], 'uint8')';
@@ -146,25 +155,78 @@ ANNOT(length(ANNOT))=[];       % last line = EOF (=0)
 ATRTIME(length(ATRTIME))=[];   % last line = EOF
 clear A;
 ATRTIME= (cumsum(ATRTIME))/sfreq;
-ind= find(ATRTIME <= TIME(end));
-ATRTIMED= ATRTIME(ind);
+% ind= find(ATRTIME <= TIME(end));
+% ATRTIMED= ATRTIME(ind);
 ANNOT=round(ANNOT);
-ANNOTD= ANNOT(ind);
+% ANNOTD= ANNOT(ind);
 
 %------ DISPLAY DATA ------------------------------------------------------
-figure(1); clf, box on, hold on
-plot(TIME, M(:,1),'r');
-if nosig==2
-    plot(TIME, M(:,2),'b');
-end;
-for k=1:length(ATRTIMED)
-    text(ATRTIMED(k),0,num2str(ANNOTD(k)));
-end;
-xlim([TIME(1), TIME(end)]);
-xlabel('Time / s'); ylabel('Voltage / mV');
-string=['ECG signal ',DATAFILE];
-title(string);
-fprintf(1,'\\n$> DISPLAYING DATA FINISHED \n');
+% figure(1); clf, box on, hold on
+% plot(TIME, M(:,1),'r');
+% if nosig==2
+%     plot(TIME, M(:,2),'b');
+% end;
+% % for k=1:length(ATRTIMED)
+% %     text(ATRTIMED(k),0,num2str(ANNOTD(k)));
+% % end;
+% xlim([TIME(1), TIME(end)]);
+% xlabel('Time / s'); ylabel('Voltage / mV');
+% string=['ECG signal ',DATAFILE];
+% title(string);
+% fprintf(1,'\\n$> DISPLAYING DATA FINISHED \n');
 
 % -------------------------------------------------------------------------
 fprintf(1,'\\n$> ALL FINISHED \n');
+
+% ----------- 自己编写代码片段的开始 ---------------------------------------
+% 读取信号
+[signal,Fs,tm]=rdsamp('data_set/mit-bih-arrhythmia-database-1.0.0/mit-bih-arrhythmia-database-1.0.0/100',1,[]);
+
+% 假设信号为 signal，时间数组为 time_array
+% 信号采样频率为 360Hz
+
+% 信号总时长
+signal_duration = 30 * 60; % 30分钟转换为秒
+
+% 时间数组中的时间点数
+num_time_points = length(ATRTIME);
+
+% 确定每个时间点对应的信号采样点索引
+sample_indices = round(ATRTIME * 360); % 四舍五入取最接近的采样点索引
+
+% 获取信号的第一通道
+signal_1 = signal(:,1);
+% 划分段落
+segments = cell(floor((length(sample_indices) - 1) / 2), 1); % 创建一个单元数组以存储不同段
+for i = 1:2:length(sample_indices) - 2
+    start_index = sample_indices(i);
+    end_index = sample_indices(i+2) - 1; % 结束索引要减1，以保证不重叠
+    
+    % 检查索引是否超出信号范围
+    if end_index > length(signal)
+        end_index = length(signal);
+    end
+    
+    % 从信号中提取段
+    segments{(i + 1) / 2} = signal(start_index:end_index);
+end
+
+% % 绘制第一段数据
+% % 提取第一段数据
+% first_segment = segments{2273};
+% 
+% % 生成对应的时间向量
+% time_vector = (0:length(first_segment)-1) / 360; % 将采样点索引转换为时间（秒）
+% 
+% figure;
+% plot(time_vector, first_segment);
+% xlabel('时间（秒）');
+% ylabel('信号幅值');
+% title('第一段信号');
+
+% 将分割的数据保存到.mat文件中，方面后续操作
+folder_path = 'ecg/resource';
+file_name = 'MIT_100.mat';
+
+% 保存 segments 数组到 .mat 文件
+save(fullfile(folder_path, file_name), 'segments');
