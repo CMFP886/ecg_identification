@@ -1,115 +1,116 @@
-% This programm reads ECG data which are saved in format 212.
-% (e.g., 100.dat from MIT-BIH-DB, cu01.dat from CU-DB,...)
-% The data are displayed in a figure together with the annotations.
-% The annotations are saved in the vector ANNOT, the corresponding
-% times (in seconds) are saved in the vector ATRTIME.
-% The annotations are saved as numbers, the meaning of the numbers can
-% be found in the codetable "ecgcodes.h" available at www.physionet.org.
-%
-% ANNOT only contains the most important information, which is displayed
-% with the program rdann (available on www.physionet.org) in the 3rd row.
-% The 4th to 6th row are not saved in ANNOT.
-%
-%
-%      created on Feb. 27, 2003 by
-%      Robert Tratnig (Vorarlberg University of Applied Sciences)
-%      (email: rtratnig@gmx.at),
-%
-%      algorithm is based on a program written by
-%      Klaus Rheinberger (University of Innsbruck)
-%      (email: klaus.rheinberger@uibk.ac.at)
-%
-%-------------------------------------------------------------------------
-clc; clear all;
-
-%------ SPECIFY DATA ------------------------------------------------------
-%------ Ö¸¶¨Êı¾İÎÄ¼ş -------------------------------------------------------
-PATH= 'data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.0.0'; % Ö¸¶¨Êı¾İµÄ´¢´æÂ·¾¶
-HEADERFILE= '100.hea';      % .hea ¸ñÊ½£¬Í·ÎÄ¼ş£¬¿ÉÓÃ¼ÇÊÂ±¾´ò¿ª
-ATRFILE= '100.atr';         % .atr ¸ñÊ½£¬ÊôĞÔÎÄ¼ş£¬Êı¾İ¸ñÊ½Îª¶ş½øÖÆÊı
-DATAFILE='100.dat';         % .dat ¸ñÊ½£¬ECG Êı¾İ
-SAMPLES2READ=1805*360;          % Ö¸¶¨ĞèÒª¶ÁÈëµÄÑù±¾Êı
-                            % Èô.datÎÄ¼şÖĞ´æ´¢ÓĞÁ½¸öÍ¨µÀµÄĞÅºÅ:
-                            % Ôò¶ÁÈë 2*SAMPLES2READ ¸öÊı¾İ 
-
-%------ LOAD HEADER DATA --------------------------------------------------
-%------ ¶ÁÈëÍ·ÎÄ¼şÊı¾İ -----------------------------------------------------
-%
-% Ê¾Àı£ºÓÃ¼ÇÊÂ±¾´ò¿ªµÄ117.hea ÎÄ¼şµÄÊı¾İ
-%
-%      117 2 360 650000
-%      117.dat 212 200 11 1024 839 31170 0 MLII
-%      117.dat 212 200 11 1024 930 28083 0 V2
-%      # 69 M 950 654 x2
-%      # None
-%
-%-------------------------------------------------------------------------
-fprintf(1,'\\n$> WORKING ON %s ...\n', HEADERFILE); % ÔÚMatlabÃüÁîĞĞ´°¿ÚÌáÊ¾µ±Ç°¹¤×÷×´Ì¬
+% % This programm reads ECG data which are saved in format 212.
+% % (e.g., 100.dat from MIT-BIH-DB, cu01.dat from CU-DB,...)
+% % The data are displayed in a figure together with the annotations.
+% % The annotations are saved in the vector ANNOT, the corresponding
+% % times (in seconds) are saved in the vector ATRTIME.
+% % The annotations are saved as numbers, the meaning of the numbers can
+% % be found in the codetable "ecgcodes.h" available at www.physionet.org.
+% %
+% % ANNOT only contains the most important information, which is displayed
+% % with the program rdann (available on www.physionet.org) in the 3rd row.
+% % The 4th to 6th row are not saved in ANNOT.
+% %
+% %
+% %      created on Feb. 27, 2003 by
+% %      Robert Tratnig (Vorarlberg University of Applied Sciences)
+% %      (email: rtratnig@gmx.at),
+% %
+% %      algorithm is based on a program written by
+% %      Klaus Rheinberger (University of Innsbruck)
+% %      (email: klaus.rheinberger@uibk.ac.at)
+% %
+% %-------------------------------------------------------------------------
+% clc; clear all;
 % 
-% ¡¾×¢¡¿º¯Êı fprintf µÄ¹¦ÄÜ½«¸ñÊ½»¯µÄÊı¾İĞ´Èëµ½Ö¸¶¨ÎÄ¼şÖĞ¡£
-% ±í´ïÊ½£ºcount = fprintf(fid,format,A,...)
-% ÔÚ×Ö·û´®'format'µÄ¿ØÖÆÏÂ£¬½«¾ØÕóAµÄÊµÊıÊı¾İ½øĞĞ¸ñÊ½»¯£¬²¢Ğ´Èëµ½ÎÄ¼ş¶ÔÏófidÖĞ¡£¸Ãº¯Êı·µ»ØËùĞ´ÈëÊı¾İµÄ×Ö½ÚÊı count¡£
-% fid ÊÇÍ¨¹ıº¯Êı fopen »ñµÃµÄÕûĞÍÎÄ¼ş±êÊ¶·û¡£fid=1£¬±íÊ¾±ê×¼Êä³ö£¨¼´Êä³öµ½ÆÁÄ»ÏÔÊ¾£©£»fid=2£¬±íÊ¾±ê×¼Æ«²î¡£
-%
-signalh= fullfile(PATH, HEADERFILE);    % Í¨¹ıº¯Êı fullfile »ñµÃÍ·ÎÄ¼şµÄÍêÕûÂ·¾¶
-fid1=fopen(signalh,'r');    % ´ò¿ªÍ·ÎÄ¼ş£¬Æä±êÊ¶·ûÎª fid1 £¬ÊôĞÔÎª'r'--¡°Ö»¶Á¡±
-z= fgetl(fid1);             % ¶ÁÈ¡Í·ÎÄ¼şµÄµÚÒ»ĞĞÊı¾İ£¬×Ö·û´®¸ñÊ½
-A= sscanf(z, '%*s %d %d %d',[1,3]); % °´ÕÕ¸ñÊ½ '%*s %d %d %d' ×ª»»Êı¾İ²¢´æÈë¾ØÕó A ÖĞ
-nosig= A(1);    % ĞÅºÅÍ¨µÀÊıÄ¿
-sfreq=A(2);     % Êı¾İ²ÉÑùÆµÂÊ
-clear A;        % Çå¿Õ¾ØÕó A £¬×¼±¸»ñÈ¡ÏÂÒ»ĞĞÊı¾İ
-for k=1:nosig           % ¶ÁÈ¡Ã¿¸öÍ¨µÀĞÅºÅµÄÊı¾İĞÅÏ¢
-    z= fgetl(fid1);
-    A= sscanf(z, '%*s %d %d %d %d %d',[1,5]);
-    dformat(k)= A(1);           % ĞÅºÅ¸ñÊ½; ÕâÀïÖ»ÔÊĞíÎª 212 ¸ñÊ½
-    gain(k)= A(2);              % Ã¿ mV °üº¬µÄÕûÊı¸öÊı
-    bitres(k)= A(3);            % ²ÉÑù¾«¶È£¨Î»·Ö±æÂÊ£©
-    zerovalue(k)= A(4);         % ECG ĞÅºÅÁãµãÏàÓ¦µÄÕûÊıÖµ
-    firstvalue(k)= A(5);        % ĞÅºÅµÄµÚÒ»¸öÕûÊıÖµ (ÓÃÓÚÆ«²î²âÊÔ)
-end;
-fclose(fid1);
-clear A;
-
-%------ LOAD BINARY DATA --------------------------------------------------
-%------ ¶ÁÈ¡ ECG ĞÅºÅ¶şÖµÊı¾İ ----------------------------------------------
-%
-if dformat~= [212,212], error('this script does not apply binary formats different to 212.'); end;
-signald= fullfile(PATH, DATAFILE);            % ¶ÁÈë 212 ¸ñÊ½µÄ ECG ĞÅºÅÊı¾İ
-fid2=fopen(signald,'r');
-A= fread(fid2, [3, SAMPLES2READ], 'uint8')';  % matrix with 3 rows, each 8 bits long, = 2*12bit
-fclose(fid2);
-% Í¨¹ıÒ»ÏµÁĞµÄÒÆÎ»£¨bitshift£©¡¢Î»Óë£¨bitand£©ÔËËã£¬½«ĞÅºÅÓÉ¶şÖµÊı¾İ×ª»»ÎªÊ®½øÖÆÊı
-M2H= bitshift(A(:,2), -4);        %×Ö½ÚÏòÓÒÒÆËÄÎ»£¬¼´È¡×Ö½ÚµÄ¸ßËÄÎ»
-M1H= bitand(A(:,2), 15);          %È¡×Ö½ÚµÄµÍËÄÎ»
-PRL=bitshift(bitand(A(:,2),8),9);     % sign-bit   È¡³ö×Ö½ÚµÍËÄÎ»ÖĞ×î¸ßÎ»£¬ÏòÓÒÒÆ¾ÅÎ»
-PRR=bitshift(bitand(A(:,2),128),5);   % sign-bit   È¡³ö×Ö½Ú¸ßËÄÎ»ÖĞ×î¸ßÎ»£¬ÏòÓÒÒÆÎåÎ»
-M( : , 1)= bitshift(M1H,8)+ A(:,1)-PRL;
-M( : , 2)= bitshift(M2H,8)+ A(:,3)-PRR;
-if M(1,:) ~= firstvalue, error('inconsistency in the first bit values'); end;
-switch nosig
-case 2
-    M( : , 1)= (M( : , 1)- zerovalue(1))/gain(1);
-    M( : , 2)= (M( : , 2)- zerovalue(2))/gain(2);
-    TIME=(0:(SAMPLES2READ-1))/sfreq;
-case 1
-    M( : , 1)= (M( : , 1)- zerovalue(1));
-    M( : , 2)= (M( : , 2)- zerovalue(1));
-    M=M';
-    M(1)=[];
-    sM=size(M);
-    sM=sM(2)+1;
-    M(sM)=0;
-    M=M';
-    M=M/gain(1);
-    TIME=(0:2*(SAMPLES2READ)-1)/sfreq;
-otherwise  % this case did not appear up to now!
-    % here M has to be sorted!!!
-    disp('Sorting algorithm for more than 2 signals not programmed yet!');
-end;
-clear A M1H M2H PRR PRL;
-fprintf(1,'\\n$> LOADING DATA FINISHED \n');
+% %------ SPECIFY DATA ------------------------------------------------------
+% %------ Ö¸¶¨Êı¾İÎÄ¼ş -------------------------------------------------------
+% PATH= 'data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.0.0'; % Ö¸¶¨Êı¾İµÄ´¢´æÂ·¾¶
+% HEADERFILE= '100.hea';      % .hea ¸ñÊ½£¬Í·ÎÄ¼ş£¬¿ÉÓÃ¼ÇÊÂ±¾´ò¿ª
+% ATRFILE= '100.atr';         % .atr ¸ñÊ½£¬ÊôĞÔÎÄ¼ş£¬Êı¾İ¸ñÊ½Îª¶ş½øÖÆÊı
+% DATAFILE='100.dat';         % .dat ¸ñÊ½£¬ECG Êı¾İ
+% SAMPLES2READ=1805*360;          % Ö¸¶¨ĞèÒª¶ÁÈëµÄÑù±¾Êı
+%                             % Èô.datÎÄ¼şÖĞ´æ´¢ÓĞÁ½¸öÍ¨µÀµÄĞÅºÅ:
+%                             % Ôò¶ÁÈë 2*SAMPLES2READ ¸öÊı¾İ 
+% 
+% %------ LOAD HEADER DATA --------------------------------------------------
+% %------ ¶ÁÈëÍ·ÎÄ¼şÊı¾İ -----------------------------------------------------
+% %
+% % Ê¾Àı£ºÓÃ¼ÇÊÂ±¾´ò¿ªµÄ117.hea ÎÄ¼şµÄÊı¾İ
+% %
+% %      117 2 360 650000
+% %      117.dat 212 200 11 1024 839 31170 0 MLII
+% %      117.dat 212 200 11 1024 930 28083 0 V2
+% %      # 69 M 950 654 x2
+% %      # None
+% %
+% %-------------------------------------------------------------------------
+% fprintf(1,'\\n$> WORKING ON %s ...\n', HEADERFILE); % ÔÚMatlabÃüÁîĞĞ´°¿ÚÌáÊ¾µ±Ç°¹¤×÷×´Ì¬
+% % 
+% % ¡¾×¢¡¿º¯Êı fprintf µÄ¹¦ÄÜ½«¸ñÊ½»¯µÄÊı¾İĞ´Èëµ½Ö¸¶¨ÎÄ¼şÖĞ¡£
+% % ±í´ïÊ½£ºcount = fprintf(fid,format,A,...)
+% % ÔÚ×Ö·û´®'format'µÄ¿ØÖÆÏÂ£¬½«¾ØÕóAµÄÊµÊıÊı¾İ½øĞĞ¸ñÊ½»¯£¬²¢Ğ´Èëµ½ÎÄ¼ş¶ÔÏófidÖĞ¡£¸Ãº¯Êı·µ»ØËùĞ´ÈëÊı¾İµÄ×Ö½ÚÊı count¡£
+% % fid ÊÇÍ¨¹ıº¯Êı fopen »ñµÃµÄÕûĞÍÎÄ¼ş±êÊ¶·û¡£fid=1£¬±íÊ¾±ê×¼Êä³ö£¨¼´Êä³öµ½ÆÁÄ»ÏÔÊ¾£©£»fid=2£¬±íÊ¾±ê×¼Æ«²î¡£
+% %
+% signalh= fullfile(PATH, HEADERFILE);    % Í¨¹ıº¯Êı fullfile »ñµÃÍ·ÎÄ¼şµÄÍêÕûÂ·¾¶
+% fid1=fopen(signalh,'r');    % ´ò¿ªÍ·ÎÄ¼ş£¬Æä±êÊ¶·ûÎª fid1 £¬ÊôĞÔÎª'r'--¡°Ö»¶Á¡±
+% z= fgetl(fid1);             % ¶ÁÈ¡Í·ÎÄ¼şµÄµÚÒ»ĞĞÊı¾İ£¬×Ö·û´®¸ñÊ½
+% A= sscanf(z, '%*s %d %d %d',[1,3]); % °´ÕÕ¸ñÊ½ '%*s %d %d %d' ×ª»»Êı¾İ²¢´æÈë¾ØÕó A ÖĞ
+% nosig= A(1);    % ĞÅºÅÍ¨µÀÊıÄ¿
+% sfreq=A(2);     % Êı¾İ²ÉÑùÆµÂÊ
+% clear A;        % Çå¿Õ¾ØÕó A £¬×¼±¸»ñÈ¡ÏÂÒ»ĞĞÊı¾İ
+% for k=1:nosig           % ¶ÁÈ¡Ã¿¸öÍ¨µÀĞÅºÅµÄÊı¾İĞÅÏ¢
+%     z= fgetl(fid1);
+%     A= sscanf(z, '%*s %d %d %d %d %d',[1,5]);
+%     dformat(k)= A(1);           % ĞÅºÅ¸ñÊ½; ÕâÀïÖ»ÔÊĞíÎª 212 ¸ñÊ½
+%     gain(k)= A(2);              % Ã¿ mV °üº¬µÄÕûÊı¸öÊı
+%     bitres(k)= A(3);            % ²ÉÑù¾«¶È£¨Î»·Ö±æÂÊ£©
+%     zerovalue(k)= A(4);         % ECG ĞÅºÅÁãµãÏàÓ¦µÄÕûÊıÖµ
+%     firstvalue(k)= A(5);        % ĞÅºÅµÄµÚÒ»¸öÕûÊıÖµ (ÓÃÓÚÆ«²î²âÊÔ)
+% end;
+% fclose(fid1);
+% clear A;
+% 
+% %------ LOAD BINARY DATA --------------------------------------------------
+% %------ ¶ÁÈ¡ ECG ĞÅºÅ¶şÖµÊı¾İ ----------------------------------------------
+% %
+% if dformat~= [212,212], error('this script does not apply binary formats different to 212.'); end;
+% signald= fullfile(PATH, DATAFILE);            % ¶ÁÈë 212 ¸ñÊ½µÄ ECG ĞÅºÅÊı¾İ
+% fid2=fopen(signald,'r');
+% A= fread(fid2, [3, SAMPLES2READ], 'uint8')';  % matrix with 3 rows, each 8 bits long, = 2*12bit
+% fclose(fid2);
+% % Í¨¹ıÒ»ÏµÁĞµÄÒÆÎ»£¨bitshift£©¡¢Î»Óë£¨bitand£©ÔËËã£¬½«ĞÅºÅÓÉ¶şÖµÊı¾İ×ª»»ÎªÊ®½øÖÆÊı
+% M2H= bitshift(A(:,2), -4);        %×Ö½ÚÏòÓÒÒÆËÄÎ»£¬¼´È¡×Ö½ÚµÄ¸ßËÄÎ»
+% M1H= bitand(A(:,2), 15);          %È¡×Ö½ÚµÄµÍËÄÎ»
+% PRL=bitshift(bitand(A(:,2),8),9);     % sign-bit   È¡³ö×Ö½ÚµÍËÄÎ»ÖĞ×î¸ßÎ»£¬ÏòÓÒÒÆ¾ÅÎ»
+% PRR=bitshift(bitand(A(:,2),128),5);   % sign-bit   È¡³ö×Ö½Ú¸ßËÄÎ»ÖĞ×î¸ßÎ»£¬ÏòÓÒÒÆÎåÎ»
+% M( : , 1)= bitshift(M1H,8)+ A(:,1)-PRL;
+% M( : , 2)= bitshift(M2H,8)+ A(:,3)-PRR;
+% if M(1,:) ~= firstvalue, error('inconsistency in the first bit values'); end;
+% switch nosig
+% case 2
+%     M( : , 1)= (M( : , 1)- zerovalue(1))/gain(1);
+%     M( : , 2)= (M( : , 2)- zerovalue(2))/gain(2);
+%     TIME=(0:(SAMPLES2READ-1))/sfreq;
+% case 1
+%     M( : , 1)= (M( : , 1)- zerovalue(1));
+%     M( : , 2)= (M( : , 2)- zerovalue(1));
+%     M=M';
+%     M(1)=[];
+%     sM=size(M);
+%     sM=sM(2)+1;
+%     M(sM)=0;
+%     M=M';
+%     M=M/gain(1);
+%     TIME=(0:2*(SAMPLES2READ)-1)/sfreq;
+% otherwise  % this case did not appear up to now!
+%     % here M has to be sorted!!!
+%     disp('Sorting algorithm for more than 2 signals not programmed yet!');
+% end;
+% clear A M1H M2H PRR PRL;
+% fprintf(1,'\\n$> LOADING DATA FINISHED \n');
 
 %------ LOAD ATTRIBUTES DATA ----------------------------------------------
+
 PATH= 'data_set\mit-bih-arrhythmia-database-1.0.0\mit-bih-arrhythmia-database-1.0.0'; % Ö¸¶¨Êı¾İµÄ´¢´æÂ·¾¶
 HEADERFILE= '100.hea';      % .hea ¸ñÊ½£¬Í·ÎÄ¼ş£¬¿ÉÓÃ¼ÇÊÂ±¾´ò¿ª
 signalh= fullfile(PATH, HEADERFILE);    % Í¨¹ıº¯Êı fullfile »ñµÃÍ·ÎÄ¼şµÄÍêÕûÂ·¾¶
@@ -185,15 +186,14 @@ fprintf(1,'\\n$> ALL FINISHED \n');
 % ¼ÙÉèĞÅºÅÎª signal£¬Ê±¼äÊı×éÎª time_array
 % ĞÅºÅ²ÉÑùÆµÂÊÎª 360Hz
 
-% ĞÅºÅ×ÜÊ±³¤
-signal_duration = 30 * 60; % 30·ÖÖÓ×ª»»ÎªÃë
-
 % Ê±¼äÊı×éÖĞµÄÊ±¼äµãÊı
 num_time_points = length(ATRTIME);
 
 % È·¶¨Ã¿¸öÊ±¼äµã¶ÔÓ¦µÄĞÅºÅ²ÉÑùµãË÷Òı
 sample_indices = round(ATRTIME * 360); % ËÄÉáÎåÈëÈ¡×î½Ó½üµÄ²ÉÑùµãË÷Òı
-
+if sample_indices(1) == 0
+    sample_indices(1) = 1;
+end
 % »ñÈ¡ĞÅºÅµÄµÚÒ»Í¨µÀ
 signal_1 = signal(:,1);
 % »®·Ö¶ÎÂä
@@ -201,12 +201,12 @@ segments = cell(floor((length(sample_indices) - 1) / 2), 1); % ´´½¨Ò»¸öµ¥ÔªÊı×éÒ
 for i = 1:2:length(sample_indices) - 2
     start_index = sample_indices(i);
     end_index = sample_indices(i+2) - 1; % ½áÊøË÷ÒıÒª¼õ1£¬ÒÔ±£Ö¤²»ÖØµş
-    
+
     % ¼ì²éË÷ÒıÊÇ·ñ³¬³öĞÅºÅ·¶Î§
     if end_index > length(signal)
         end_index = length(signal);
     end
-    
+
     % ´ÓĞÅºÅÖĞÌáÈ¡¶Î
     segments{(i + 1) / 2} = signal(start_index:end_index);
 end
@@ -224,9 +224,9 @@ end
 % ylabel('ĞÅºÅ·ùÖµ');
 % title('µÚÒ»¶ÎĞÅºÅ');
 
-% ½«·Ö¸îµÄÊı¾İ±£´æµ½.matÎÄ¼şÖĞ£¬·½ÃæºóĞø²Ù×÷
-folder_path = 'ecg/resource';
-file_name = 'MIT_100.mat';
-
-% ±£´æ segments Êı×éµ½ .mat ÎÄ¼ş
-save(fullfile(folder_path, file_name), 'segments');
+% % ½«·Ö¸îµÄÊı¾İ±£´æµ½.matÎÄ¼şÖĞ£¬·½ÃæºóĞø²Ù×÷
+% folder_path = 'ecg/resource';
+% file_name = 'MIT_100.mat';
+% 
+% % ±£´æ segments Êı×éµ½ .mat ÎÄ¼ş
+% save(fullfile(folder_path, file_name), 'segments');

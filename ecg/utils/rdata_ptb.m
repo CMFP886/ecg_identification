@@ -1,7 +1,7 @@
 clc;
 clear;
-[signal,Fs,tm]=rdsamp('data_set/ptb-diagnostic-ecg-database-1.0.0/ptb-diagnostic-ecg-database-1.0.0/patient003/s0017lre',1,20000);
-%[signal,Fs,tm]=rdsamp('data_set/mit-bih-arrhythmia-database-1.0.0/mit-bih-arrhythmia-database-1.0.0/102',1,15000);
+% [signal,Fs,tm]=rdsamp('data_set/ptb-diagnostic-ecg-database-1.0.0/ptb-diagnostic-ecg-database-1.0.0/patient003/s0017lre',1,20000);
+[signal,Fs,tm]=rdsamp('data_set/mit-bih-arrhythmia-database-1.0.0/mit-bih-arrhythmia-database-1.0.0/100',1,10000);
 [ann]=rdann('data_set/ptb-diagnostic-ecg-database-1.0.0//ptb-diagnostic-ecg-database-1.0.0/patient002/s0015lre', 'hea');
 % plot(tm,signal)
 

@@ -1,4 +1,4 @@
-file_path = 'ecg/resource/MIT_100_combined_f.mat';
+file_path = ['ecg/resource/MIT_100_combined_f.mat'];
 
 % ---加载.mat文件中的数据，获取存储在其中的初级融合特征---
 load(file_path);
@@ -30,9 +30,9 @@ for i = 1:num_cols
     end
     mf(:, i) = column_vector;
 end
-% 将分割的数据保存到.mat文件中，方面后续操作
+% 将融合后的数据保存到.mat文件中，方面后续操作
 folder_path = 'ecg/resource';
-file_name = 'MIT_100_mf.mat';
+file_name = ['MIT_100_mf.mat'];
 
 % 保存 segments 数组到 .mat 文件
 save(fullfile(folder_path, file_name), 'mf');

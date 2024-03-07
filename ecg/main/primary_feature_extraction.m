@@ -75,7 +75,7 @@ for i = 1:length(segments)
 
     % 将向量折叠成10*110的矩阵
     combined_matrix = reshape(resampled_combined_vector, 110, 10)';
-    
+
     primary_features{i} = combined_matrix;
 end
 
